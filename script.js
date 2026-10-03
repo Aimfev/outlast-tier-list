@@ -1,3 +1,4 @@
+alert("NEW SCRIPT LOADED");
 document.addEventListener("DOMContentLoaded",function(){
 const SUPABASE_URL="https://zlafujlphygriexovkhw.supabase.co";
 const SUPABASE_KEY="sb_publishable_37Iz_G90JMHEFzDyWI1SRA_W6BDxl5S";
