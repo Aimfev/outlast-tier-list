@@ -8,10 +8,12 @@ let active="All";
 const types=["Sword","UHC","Cart","Spear","Mace","Elytra Mace","Neth Pot","SMP"];
 const ranks=["S","A+","A","B+","B"];
 
-function esc(x){return String(x??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]))}
+function esc(x){
+return String(x??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]))
+}
 
 async function load(){
-const r=await DB.from("players").select("*");
+const r=await DB.from("players").select("*").order("id",{ascending:true});
 if(r.error){
 $("rankingList").textContent="Database error: "+r.error.message;
 return;
@@ -34,41 +36,60 @@ $("playerGrid").innerHTML=list.map(p=>`<div class="profile card glass"><h3>${esc
 function admin(){
 let html=`<button id="saveChanges" class="saveButton">💾 SAVE CHANGES</button>`;
 players.forEach((p,i)=>{
-html+=`<div class="adminPlayer"><b>${esc(p.name)}</b><input class="adminInput" value="${esc(p.name)}" data-name="${i}"><div class="adminGrid"><select data-i="${i}" data-k="pvp_type">${types.map(t=>`<option ${p.pvp_type===t?"selected":""}>${t}</option>`).join("")}</select><select data-i="${i}" data-k="tier">${ranks.map(t=>`<option ${p.tier===t?"selected":""}>${t}</option>`).join("")}</select></div><button class="danger" data-del="${i}">🗑 REMOVE</button></div>`;
+html+=`<div class="adminPlayer"><b>${esc(p.name)}</b><input class="adminInput" value="${esc(p.name)}" data-name="${i}"><div class="adminGrid"><select data-i="${i}" data-k="pvp_type">${types.map(t=>`<option value="${esc(t)}" ${p.pvp_type===t?"selected":""}>${esc(t)}</option>`).join("")}</select><select data-i="${i}" data-k="tier">${ranks.map(t=>`<option value="${esc(t)}" ${p.tier===t?"selected":""}>${esc(t)}</option>`).join("")}</select></div><button class="danger" data-del="${i}">🗑 REMOVE</button></div>`;
 });
 $("adminPlayers").innerHTML=html;
 }
 
 async function save(){
-let button=$("saveChanges");
+const button=$("saveChanges");
 button.textContent="SAVING...";
+button.disabled=true;
 
-let existing=players.filter(p=>p.id);
-let newPlayers=players.filter(p=>!p.id);
+const existing=players.filter(p=>p.id!==null&&p.id!==undefined);
+const newPlayers=players.filter(p=>p.id===null||p.id===undefined);
 
 if(existing.length){
-let r=await DB.from("players").upsert(existing.map(p=>({id:p.id,name:p.name,pvp_type:p.pvp_type,tier:p.tier})));
+const r=await DB.from("players").update(
+existing.map(p=>({
+name:p.name,
+pvp_type:p.pvp_type,
+tier:p.tier
+}))
+).in("id",existing.map(p=>p.id));
+
 if(r.error){
 alert("Save error: "+r.error.message);
 button.textContent="SAVE FAILED";
+button.disabled=false;
 return;
 }
 }
 
 if(newPlayers.length){
-let r=await DB.from("players").insert(newPlayers.map(p=>({name:p.name,pvp_type:p.pvp_type,tier:p.tier})));
+const r=await DB.from("players").insert(
+newPlayers.map(p=>({
+name:p.name,
+pvp_type:p.pvp_type,
+tier:p.tier
+}))
+);
+
 if(r.error){
-alert("Add error: "+r.error.message);
+alert("Save error: "+r.error.message);
 button.textContent="SAVE FAILED";
+button.disabled=false;
 return;
 }
 }
 
 if(deleted.length){
-let r=await DB.from("players").delete().in("id",deleted);
+const r=await DB.from("players").delete().in("id",deleted);
+
 if(r.error){
 alert("Delete error: "+r.error.message);
 button.textContent="DELETE FAILED";
+button.disabled=false;
 return;
 }
 }
@@ -77,21 +98,29 @@ deleted=[];
 await load();
 admin();
 button.textContent="✅ SAVED";
+button.disabled=false;
 }
 
-$("menuBtn").onclick=()=>{$("sideMenu").classList.toggle("open")};
+$("menuBtn").onclick=()=>{
+$("sideMenu").classList.toggle("open");
+};
 
 $("loginBtn").onclick=()=>{
 $("loginModal").classList.add("show");
 $("sideMenu").classList.remove("open");
 };
 
-$("loginClose").onclick=()=>{$("loginModal").classList.remove("show")};
-$("adminClose").onclick=()=>{$("adminModal").classList.remove("show")};
+$("loginClose").onclick=()=>{
+$("loginModal").classList.remove("show");
+};
+
+$("adminClose").onclick=()=>{
+$("adminModal").classList.remove("show");
+};
 
 $("loginSubmit").onclick=async()=>{
-let email=$("loginEmail").value.trim();
-let password=$("loginPass").value;
+const email=$("loginEmail").value.trim();
+const password=$("loginPass").value;
 
 if(!email||!password){
 $("loginError").textContent="Enter email and password.";
@@ -100,20 +129,26 @@ return;
 
 $("loginError").textContent="Logging in...";
 
-let r=await DB.auth.signInWithPassword({email:email,password:password});
+const r=await DB.auth.signInWithPassword({
+email:email,
+password:password
+});
 
 if(r.error){
 $("loginError").textContent=r.error.message;
 return;
 }
 
+$("loginError").textContent="";
 $("loginModal").classList.remove("show");
 $("adminModal").classList.add("show");
 admin();
 };
 
 $("loginPass").onkeydown=e=>{
-if(e.key==="Enter")$("loginSubmit").click();
+if(e.key==="Enter"){
+$("loginSubmit").click();
+}
 };
 
 $("search").oninput=render;
@@ -126,7 +161,8 @@ render();
 };
 
 $("addPlayer").onclick=()=>{
-let name=$("newName").value.trim();
+const name=$("newName").value.trim();
+
 if(!name)return;
 
 if(players.some(p=>String(p.name).toLowerCase()===name.toLowerCase())){
@@ -134,22 +170,31 @@ alert("Player already exists.");
 return;
 }
 
-players.push({id:null,name:name,pvp_type:"Sword",tier:"B"});
+players.push({
+id:null,
+name:name,
+pvp_type:"Sword",
+tier:"B"
+});
+
 $("newName").value="";
 admin();
 render();
 };
 
 $("adminPlayers").onchange=e=>{
-let i=e.target.dataset.i;
+const i=e.target.dataset.i;
+
 if(i!==undefined){
 players[Number(i)][e.target.dataset.k]=e.target.value;
 render();
+admin();
 }
 };
 
 $("adminPlayers").oninput=e=>{
-let i=e.target.dataset.name;
+const i=e.target.dataset.name;
+
 if(i!==undefined){
 players[Number(i)].name=e.target.value;
 }
@@ -161,11 +206,15 @@ save();
 return;
 }
 
-let i=e.target.dataset.del;
+const i=e.target.dataset.del;
 
 if(i!==undefined){
-let p=players.splice(Number(i),1)[0];
-if(p.id)deleted.push(p.id);
+const p=players.splice(Number(i),1)[0];
+
+if(p.id!==null&&p.id!==undefined){
+deleted.push(p.id);
+}
+
 admin();
 render();
 }
