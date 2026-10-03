@@ -8,25 +8,11 @@ let activeFilter="ALL";
 let editingPlayers=[];
 const pvpTypes=["Sword","UHC","Cart","Spear","Mace","Elytra Mace","Neth Pot","SMP"];
 const tiers=["HT1","LT1","HT2","LT2","HT3","LT3","HT4","LT4","HT5","LT5","LT6"];
-const tierDescriptions={
-HT1:"The Elites",
-LT1:"The Elites",
-HT2:"Extremely skilled",
-LT2:"Extremely skilled",
-HT3:"The Sweats",
-LT3:"The Sweats",
-HT4:"Above Average",
-LT4:"Above Average",
-HT5:"Average",
-LT5:"Entry Level",
-LT6:"Needs a lot of practice / below LT5"
-};
+const tierDescriptions={HT1:"The Elites",LT1:"The Elites",HT2:"Extremely skilled",LT2:"Extremely skilled",HT3:"The Sweats",LT3:"The Sweats",HT4:"Above Average",LT4:"Above Average",HT5:"Average",LT5:"Entry Level",LT6:"Needs a lot of practice / below LT5"};
 const $=id=>document.getElementById(id);
 
 function escapeHTML(value){
-return String(value??"").replace(/[&<>"']/g,function(c){
-return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c];
-});
+return String(value??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));
 }
 
 function getMinecraftAvatar(name){
@@ -54,7 +40,7 @@ showLoadError();
 }
 
 function sortPlayers(list){
-return [...list].sort(function(a,b){
+return [...list].sort((a,b)=>{
 let ai=tiers.indexOf(a.tier);
 let bi=tiers.indexOf(b.tier);
 if(ai===-1)ai=999;
@@ -66,7 +52,7 @@ return String(a.name||"").localeCompare(String(b.name||""));
 
 function applyFilters(){
 const search=(($("search")&&$("search").value)||"").toLowerCase().trim();
-filteredPlayers=sortPlayers(players).filter(function(p){
+filteredPlayers=sortPlayers(players).filter(p=>{
 const typeMatch=activeFilter==="ALL"||p.pvp_type===activeFilter;
 const searchMatch=!search||String(p.name||"").toLowerCase().includes(search);
 return typeMatch&&searchMatch;
@@ -79,12 +65,12 @@ function renderFilters(){
 const wrap=$("filters");
 if(!wrap)return;
 wrap.innerHTML="";
-["ALL",...pvpTypes].forEach(function(type){
+["ALL",...pvpTypes].forEach(type=>{
 const button=document.createElement("button");
 button.className="filterButton"+(activeFilter===type?" active":"");
 button.textContent=type==="ALL"?"All":type;
 button.type="button";
-button.onclick=function(){
+button.onclick=()=>{
 activeFilter=type;
 renderFilters();
 applyFilters();
@@ -103,22 +89,10 @@ if(!filteredPlayers.length){
 list.innerHTML='<div class="empty">No players found.</div>';
 return;
 }
-list.innerHTML=filteredPlayers.map(function(p,i){
+list.innerHTML=filteredPlayers.map((p,i)=>{
 const avatar=getMinecraftAvatar(p.name);
 const letter=escapeHTML(String(p.name||"?").charAt(0).toUpperCase());
-return '<div class="rankRow">'+
-'<div class="rankNumber">#'+(i+1)+'</div>'+
-'<div class="playerInfo">'+
-'<div class="avatar">'+
-'<img src="'+avatar+'" alt="'+escapeHTML(p.name)+'" loading="lazy" onerror="this.style.display=\'none\';this.parentElement.textContent=\''+letter+'\'">'+
-'</div>'+
-'<div class="playerText">'+
-'<div class="playerName">'+escapeHTML(p.name)+'</div>'+
-'<div class="playerSub">'+escapeHTML(p.pvp_type)+' • '+escapeHTML(tierDescriptions[p.tier]||"")+'</div>'+
-'</div>'+
-'</div>'+
-'<div class="tierBadge">'+escapeHTML(p.tier)+'</div>'+
-'</div>';
+return `<div class="rankRow"><div class="rankNumber">#${i+1}</div><div class="playerInfo"><div class="avatar"><img src="${avatar}" alt="${escapeHTML(p.name)}" loading="lazy" onerror="this.style.display='none';this.parentElement.textContent='${letter}'"></div><div class="playerText"><div class="playerName">${escapeHTML(p.name)}</div><div class="playerSub">${escapeHTML(p.pvp_type)} • ${escapeHTML(tierDescriptions[p.tier]||"")}</div></div></div><div class="tierBadge">${escapeHTML(p.tier)}</div></div>`;
 }).join("");
 }
 
@@ -129,23 +103,9 @@ if(!filteredPlayers.length){
 grid.innerHTML='<div class="empty">No players found.</div>';
 return;
 }
-grid.innerHTML=filteredPlayers.map(function(p){
+grid.innerHTML=filteredPlayers.map(p=>{
 const avatar=getMinecraftAvatar(p.name);
-return '<div class="profileCard">'+
-'<div class="profileTop">'+
-'<div class="profileAvatar">'+
-'<img src="'+avatar+'" alt="'+escapeHTML(p.name)+'" loading="lazy" onerror="this.style.display=\'none\'">'+
-'</div>'+
-'<div>'+
-'<h3 class="profileName">'+escapeHTML(p.name)+'</h3>'+
-'<div class="profileType">'+escapeHTML(p.pvp_type)+'</div>'+
-'</div>'+
-'</div>'+
-'<div class="profileDetails">'+
-'<div class="detail">Tier<strong>'+escapeHTML(p.tier)+'</strong></div>'+
-'<div class="detail">Level<strong>'+escapeHTML(tierDescriptions[p.tier]||"")+'</strong></div>'+
-'</div>'+
-'</div>';
+return `<div class="profileCard"><div class="profileTop"><div class="profileAvatar"><img src="${avatar}" alt="${escapeHTML(p.name)}" loading="lazy" onerror="this.style.display='none'"></div><div><h3 class="profileName">${escapeHTML(p.name)}</h3><div class="profileType">${escapeHTML(p.pvp_type)}</div></div></div><div class="profileDetails"><div class="detail">Tier<strong>${escapeHTML(p.tier)}</strong></div><div class="detail">Level<strong>${escapeHTML(tierDescriptions[p.tier]||"")}</strong></div></div></div>`;
 }).join("");
 }
 
@@ -158,32 +118,29 @@ renderAdmin();
 function renderAdmin(){
 const box=$("adminPlayers");
 if(!box)return;
+
 if(!editingPlayers.length){
 box.innerHTML='<div class="empty">No players yet.</div>';
 return;
 }
-box.innerHTML=editingPlayers.map(function(p,i){
-return '<div class="adminPlayer">'+
-'<div class="adminPlayerName">'+escapeHTML(p.name)+'</div>'+
-'<div class="adminGrid">'+
-'<select class="adminType" data-index="'+i+'">'+
-pvpTypes.map(function(x){
-return '<option value="'+escapeHTML(x)+'" '+(p.pvp_type===x?"selected":"")+'>'+escapeHTML(x)+'</option>';
-}).join("")+
-'</select>'+
-'<select class="adminTier" data-index="'+i+'">'+
-tiers.map(function(x){
-return '<option value="'+x+'" '+(p.tier===x?"selected":"")+'>'+x+'</option>';
-}).join("")+
-'</select>'+
-'</div>'+
-'<div class="adminDescription">'+escapeHTML(tierDescriptions[p.tier]||"")+'</div>'+
-'<button type="button" class="removeButton" data-index="'+i+'">REMOVE</button>'+
-'</div>';
-}).join("");
 
-box.querySelectorAll(".adminType").forEach(function(el){
-el.onchange=function(){
+box.innerHTML=editingPlayers.map((p,i)=>`
+<div class="adminPlayer">
+<div class="adminPlayerName">${escapeHTML(p.name)}</div>
+<div class="adminGrid">
+<select class="adminType" data-index="${i}">
+${pvpTypes.map(x=>`<option value="${escapeHTML(x)}" ${p.pvp_type===x?"selected":""}>${escapeHTML(x)}</option>`).join("")}
+</select>
+<select class="adminTier" data-index="${i}">
+${tiers.map(x=>`<option value="${x}" ${p.tier===x?"selected":""}>${x}</option>`).join("")}
+</select>
+</div>
+<div class="adminDescription">${escapeHTML(tierDescriptions[p.tier]||"")}</div>
+<button type="button" class="removeButton" data-index="${i}">REMOVE</button>
+</div>`).join("");
+
+box.querySelectorAll(".adminType").forEach(el=>{
+el.onchange=()=>{
 const index=Number(el.dataset.index);
 if(editingPlayers[index]){
 editingPlayers[index].pvp_type=el.value;
@@ -192,8 +149,8 @@ renderAdmin();
 };
 });
 
-box.querySelectorAll(".adminTier").forEach(function(el){
-el.onchange=function(){
+box.querySelectorAll(".adminTier").forEach(el=>{
+el.onchange=()=>{
 const index=Number(el.dataset.index);
 if(editingPlayers[index]){
 editingPlayers[index].tier=el.value;
@@ -202,8 +159,8 @@ renderAdmin();
 };
 });
 
-box.querySelectorAll(".removeButton").forEach(function(el){
-el.onclick=function(){
+box.querySelectorAll(".removeButton").forEach(el=>{
+el.onclick=()=>{
 const index=Number(el.dataset.index);
 editingPlayers.splice(index,1);
 renderAdmin();
@@ -214,6 +171,7 @@ renderAdmin();
 function addPlayer(){
 const input=$("newName");
 if(!input)return;
+
 const name=input.value.trim();
 
 if(!name){
@@ -221,9 +179,7 @@ alert("Enter a player name.");
 return;
 }
 
-const exists=editingPlayers.some(function(p){
-return String(p.name||"").toLowerCase()===name.toLowerCase();
-});
+const exists=editingPlayers.some(p=>String(p.name||"").toLowerCase()===name.toLowerCase());
 
 if(exists){
 alert("That player already exists.");
@@ -252,9 +208,7 @@ button.disabled=true;
 button.textContent="SAVING...";
 
 try{
-const originalById=new Map(
-players.filter(function(p){return p.id!=null;}).map(function(p){return [p.id,p];})
-);
+const originalById=new Map(players.filter(p=>p.id!=null).map(p=>[p.id,p]));
 
 for(const p of editingPlayers){
 
@@ -268,9 +222,7 @@ tier:p.tier
 
 if(result.error)throw result.error;
 
-if(result.data&&result.data.id!=null){
 p.id=result.data.id;
-}
 
 }else{
 
@@ -287,28 +239,23 @@ tier:p.tier
 if(result.error)throw result.error;
 
 }
-
+}
 }
 
-}
+const currentIds=new Set(editingPlayers.filter(p=>p.id!=null).map(p=>p.id));
 
-const currentIds=new Set(
-editingPlayers.filter(function(p){return p.id!=null;}).map(function(p){return p.id;})
-);
-
-const deleted=players.filter(function(p){
-return p.id!=null&&!currentIds.has(p.id);
-});
+const deleted=players.filter(p=>p.id!=null&&!currentIds.has(p.id));
 
 if(deleted.length){
-const ids=deleted.map(function(p){return p.id;});
+const ids=deleted.map(p=>p.id);
 const result=await db.from("players").delete().in("id",ids);
 if(result.error)throw result.error;
 }
 
 await loadPlayers();
 
-if($("adminModal"))$("adminModal").classList.add("show");
+editingPlayers=JSON.parse(JSON.stringify(players));
+renderAdmin();
 
 alert("Changes saved successfully!");
 
@@ -397,7 +344,7 @@ const saveButton=$("saveChanges");
 const search=$("search");
 
 if(menuBtn){
-menuBtn.onclick=function(){
+menuBtn.onclick=()=>{
 $("sideMenu").classList.add("open");
 $("menuOverlay").classList.add("show");
 };
@@ -405,8 +352,8 @@ $("menuOverlay").classList.add("show");
 
 if(menuOverlay)menuOverlay.onclick=closeMenu;
 
-document.querySelectorAll(".menuItem[data-go]").forEach(function(btn){
-btn.onclick=function(){
+document.querySelectorAll(".menuItem[data-go]").forEach(btn=>{
+btn.onclick=()=>{
 const target=$(btn.dataset.go);
 closeMenu();
 if(target)target.scrollIntoView({behavior:"smooth"});
@@ -414,20 +361,20 @@ if(target)target.scrollIntoView({behavior:"smooth"});
 });
 
 if(loginBtn){
-loginBtn.onclick=function(){
+loginBtn.onclick=()=>{
 closeMenu();
 openLogin();
 };
 }
 
 if(loginClose){
-loginClose.onclick=function(){
+loginClose.onclick=()=>{
 $("loginModal").classList.remove("show");
 };
 }
 
 if(adminClose){
-adminClose.onclick=function(){
+adminClose.onclick=()=>{
 $("adminModal").classList.remove("show");
 };
 }
@@ -440,12 +387,12 @@ if(saveButton)saveButton.onclick=saveChanges;
 if(search)search.addEventListener("input",applyFilters);
 
 if($("loginPassword")){
-$("loginPassword").addEventListener("keydown",function(e){
+$("loginPassword").addEventListener("keydown",e=>{
 if(e.key==="Enter")login();
 });
 }
 
-window.addEventListener("keydown",function(e){
+window.addEventListener("keydown",e=>{
 if(e.key==="Escape"){
 closeMenu();
 $("loginModal").classList.remove("show");
@@ -473,5 +420,4 @@ console.error("Supabase initialization error:",error);
 showLoadError();
 setup();
 }
-
 });
