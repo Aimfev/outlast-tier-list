@@ -1,1 +1,115 @@
-const $=id=>document.getElementById(id),cats=['Sword','Axe','Mace','Spear','Crystal'],all=['All',...cats],ranks=['S+','S','A+','A','B+','B'],pts={'S+':5,S:4,'A+':3.5,A:3,'B+':2.5,B:2};let active='All';let players=[{name:'Void',tiers:{Sword:'S+',Axe:'S',Mace:'A+',Spear:'S',Crystal:'S+'}},{name:'Rex',tiers:{Sword:'S',Axe:'S+',Mace:'S',Spear:'A+',Crystal:'S'}},{name:'Frost',tiers:{Sword:'A+',Axe:'S',Mace:'A+',Spear:'S',Crystal:'A+'}},{name:'Kairo',tiers:{Sword:'S',Axe:'A+',Mace:'S',Spear:'A',Crystal:'A+'}},{name:'Nox',tiers:{Sword:'A+',Axe:'A',Mace:'S',Spear:'A+',Crystal:'A'}},{name:'Riven',tiers:{Sword:'A',Axe:'A+',Mace:'A',Spear:'A+',Crystal:'S'}},{name:'Zen',tiers:{Sword:'A',Axe:'A',Mace:'A+',Spear:'A',Crystal:'A+'}},{name:'Drift',tiers:{Sword:'B+',Axe:'A',Mace:'A',Spear:'A',Crystal:'A'}},{name:'Nova',tiers:{Sword:'B+',Axe:'B+',Mace:'A',Spear:'A',Crystal:'B+'}}];const score=p=>Object.values(p.tiers).reduce((a,x)=>a+pts[x],0)/5;const cls=x=>x.startsWith('S+')?'splus':x=='S'?'s':x.startsWith('A')?'a':'b';const esc=x=>String(x).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));function render(){let q=$('search').value.toLowerCase(),list=players.filter(p=>p.name.toLowerCase().includes(q));if(active!='All')list=list.filter(p=>p.tiers[active]);list.sort((a,b)=>score(b)-score(a));$('filters').innerHTML=all.map(c=>`<button class="${c==active?'active':''}" data-cat="${c}">${c}</button>`).join('');$('count').textContent=list.length+' players';$('rankingList').innerHTML=list.length?list.map((p,i)=>`<div class="rank"><b>#${i+1}</b><div class="player"><div class="avatar">${p.name[0]}</div><div><div class="name">${esc(p.name)}</div><div class="sub">Overall ${score(p).toFixed(1)}</div></div></div>${cats.map(c=>`<div class="tier ${cls(p.tiers[c])} ${active!=c?'hide':''}">${p.tiers[c]}</div>`).join('')}</div>`).join(''):'<div>No players found.</div>';$('playerGrid').innerHTML=list.map(p=>`<div class="profile card glass"><h3>${esc(p.name)}</h3><small>Overall ${score(p).toFixed(1)}</small><div class="tiers">${cats.map(c=>`<div class="mini"><span>${c}</span><b class="${cls(p.tiers[c])}">${p.tiers[c]}</b></div>`).join('')}</div></div>`).join('')}function adminRender(){$('adminPlayers').innerHTML=players.map((p,i)=>`<div class="adminPlayer"><b>👤 ${esc(p.name)}</b><input class="adminInput" value="${esc(p.name)}" data-name="${i}"><div class="adminGrid">${cats.map(c=>`<select data-player="${i}" data-type="${c}">${ranks.map(r=>`<option ${p.tiers[c]==r?'selected':''}>${r}</option>`).join('')}</select>`).join('')}</div><button class="danger" data-remove="${i}">🗑 Remove</button></div>`).join('')}function toggleMenu(){$('sideMenu').classList.toggle('open')}function close(id){$(id).classList.remove('show')}$('menuBtn').onclick=toggleMenu;document.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>{$(b.dataset.go).scrollIntoView({behavior:'smooth'});$('sideMenu').classList.remove('open')});$('loginBtn').onclick=()=>{$('sideMenu').classList.remove('open');$('loginModal').classList.add('show')};document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>close(b.dataset.close));$('loginSubmit').onclick=()=>{if($('loginUser').value=='outlast2026'&&$('loginPass').value=='outlast2026'){close('loginModal');$('adminModal').classList.add('show');adminRender()}else $('loginError').textContent='Incorrect username or password.'};$('search').oninput=render;$('filters').onclick=e=>{if(e.target.dataset.cat){active=e.target.dataset.cat;render()}};$('addPlayer').onclick=()=>{let n=$('newName').value.trim();if(!n)return;if(players.some(p=>p.name.toLowerCase()==n.toLowerCase()))return alert('Player already exists');let tiers={};cats.forEach(c=>tiers[c]='B');players.push({name:n,tiers});$('newName').value='';adminRender();render()};$('adminPlayers').onchange=e=>{let i=e.target.dataset.player;if(i!==undefined){players[i].tiers[e.target.dataset.type]=e.target.value;render()}if(e.target.dataset.name!==undefined){let n=e.target.value.trim();if(n)players[e.target.dataset.name].name=n;render()}};$('adminPlayers').onclick=e=>{let i=e.target.dataset.remove;if(i!==undefined&&confirm('Remove '+players[i].name+' from the tier list?')){players.splice(i,1);adminRender();render()}};setInterval(()=>$('liveText').textContent='LIVE • Updated '+new Date().toLocaleTimeString(),1000);render();
+const $=id=>document.getElementById(id);
+const cats=['Sword','Axe','Mace','Spear','Crystal'];
+const all=['All',...cats];
+const ranks=['S+','S','A+','A','B+','B'];
+const pts={'S+':5,S:4,'A+':3.5,A:3,'B+':2.5,B:2};
+let active='All';
+const defaultPlayers=[
+{name:'Void',tiers:{Sword:'S+',Axe:'S',Mace:'A+',Spear:'S',Crystal:'S+'}},
+{name:'Rex',tiers:{Sword:'S',Axe:'S+',Mace:'S',Spear:'A+',Crystal:'S'}},
+{name:'Frost',tiers:{Sword:'A+',Axe:'S',Mace:'A+',Spear:'S',Crystal:'A+'}},
+{name:'Kairo',tiers:{Sword:'S',Axe:'A+',Mace:'S',Spear:'A',Crystal:'A+'}},
+{name:'Nox',tiers:{Sword:'A+',Axe:'A',Mace:'S',Spear:'A+',Crystal:'A'}},
+{name:'Riven',tiers:{Sword:'A',Axe:'A+',Mace:'A',Spear:'A+',Crystal:'S'}},
+{name:'Zen',tiers:{Sword:'A',Axe:'A',Mace:'A+',Spear:'A',Crystal:'A+'}},
+{name:'Drift',tiers:{Sword:'B+',Axe:'A',Mace:'A',Spear:'A',Crystal:'A'}},
+{name:'Nova',tiers:{Sword:'B+',Axe:'B+',Mace:'A',Spear:'A',Crystal:'B+'}}
+];
+let players=JSON.parse(localStorage.getItem('outlastTiersPlayers'))||defaultPlayers;
+function savePlayers(){
+localStorage.setItem('outlastTiersPlayers',JSON.stringify(players));
+alert('✅ Changes saved!');
+}
+function score(p){
+return Object.values(p.tiers).reduce((a,x)=>a+pts[x],0)/5;
+}
+function cls(x){
+return x.startsWith('S+')?'splus':x=='S'?'s':x.startsWith('A')?'a':'b';
+}
+function esc(x){
+return String(x).replace(/[&<>"']/g,m=>({'&':'&','<':'<','>':'>','"':'"',"'":'''}[m]));
+}
+function render(){
+let q=$('search').value.toLowerCase();
+let list=players.filter(p=>p.name.toLowerCase().includes(q));
+if(active!='All')list=list.filter(p=>p.tiers[active]);
+list.sort((a,b)=>score(b)-score(a));
+$('filters').innerHTML=all.map(c=>"<button class="${c==active?'active':''}" data-cat="${c}">${c}</button>").join('');
+$('count').textContent=list.length+' players';
+$('rankingList').innerHTML=list.length?list.map((p,i)=>"<div class="rank"><b>#${i+1}</b><div class="player"><div class="avatar">${p.name[0]}</div><div><div class="name">${esc(p.name)}</div><div class="sub">Overall ${score(p).toFixed(1)}</div></div></div>${cats.map(c=>"<div class="tier ${cls(p.tiers[c])} ${active!=c?'hide':''}">${p.tiers[c]}</div>").join('')}</div>").join(''):'<div>No players found.</div>';
+$('playerGrid').innerHTML=list.map(p=>"<div class="profile card glass"><h3>${esc(p.name)}</h3><small>Overall ${score(p).toFixed(1)}</small><div class="tiers">${cats.map(c=>"<div class="mini"><span>${c}</span><b class="${cls(p.tiers[c])}">${p.tiers[c]}</b></div>").join('')}</div></div>").join('');
+}
+function adminRender(){
+$('adminPlayers').innerHTML=" <button id="saveChanges" style="background:#176b42!important;color:white!important;font-weight:bold">💾 Save Changes</button> ${players.map((p,i)=>"<div class="adminPlayer"><b>👤 ${esc(p.name)}</b><input class="adminInput" value="${esc(p.name)}" data-name="${i}"><div class="adminGrid">${cats.map(c=>"<select data-player="${i}" data-type="${c}">${ranks.map(r=>"<option ${p.tiers[c]==r?'selected':''}>${r}</option>").join('')}</select>").join('')}</div><button class="danger" data-remove="${i}">🗑 Remove</button></div>").join('')}";
+$('saveChanges').onclick=savePlayers;
+}
+function toggleMenu(){
+$('sideMenu').classList.toggle('open');
+}
+function close(id){
+$(id).classList.remove('show');
+}
+$('menuBtn').onclick=toggleMenu;
+document.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>{
+$(b.dataset.go).scrollIntoView({behavior:'smooth'});
+$('sideMenu').classList.remove('open');
+});
+$('loginBtn').onclick=()=>{
+$('sideMenu').classList.remove('open');
+$('loginModal').classList.add('show');
+};
+document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>close(b.dataset.close));
+$('loginSubmit').onclick=()=>{
+if($('loginUser').value=='outlast2026'&&$('loginPass').value=='outlast2026'){
+close('loginModal');
+$('adminModal').classList.add('show');
+adminRender();
+}else{
+$('loginError').textContent='Incorrect username or password.';
+}
+};
+$('search').oninput=render;
+$('filters').onclick=e=>{
+if(e.target.dataset.cat){
+active=e.target.dataset.cat;
+render();
+}
+};
+$('addPlayer').onclick=()=>{
+let n=$('newName').value.trim();
+if(!n)return;
+if(players.some(p=>p.name.toLowerCase()==n.toLowerCase())){
+alert('Player already exists');
+return;
+}
+let tiers={};
+cats.forEach(c=>tiers[c]='B');
+players.push({name:n,tiers});
+$('newName').value='';
+adminRender();
+render();
+};
+$('adminPlayers').onchange=e=>{
+let i=e.target.dataset.player;
+if(i!==undefined){
+players[i].tiers[e.target.dataset.type]=e.target.value;
+render();
+}
+if(e.target.dataset.name!==undefined){
+let n=e.target.value.trim();
+if(n){
+players[e.target.dataset.name].name=n;
+render();
+}
+}
+};
+$('adminPlayers').onclick=e=>{
+let i=e.target.dataset.remove;
+if(i!==undefined&&confirm('Remove '+players[i].name+' from the tier list?')){
+players.splice(i,1);
+adminRender();
+render();
+}
+};
+setInterval(()=>$('liveText').textContent='LIVE • Updated '+new Date().toLocaleTimeString(),1000);
+render();
