@@ -16,10 +16,11 @@ async function load(){
 const r=await DB.from("players").select("*").order("id",{ascending:true});
 if(r.error){
 $("rankingList").textContent="Database error: "+r.error.message;
-return;
+return false;
 }
 players=r.data||[];
 render();
+return true;
 }
 
 function render(){
@@ -43,27 +44,28 @@ $("adminPlayers").innerHTML=html;
 
 async function save(){
 const button=$("saveChanges");
+
+if(!button)return;
+
 button.textContent="SAVING...";
 button.disabled=true;
 
+try{
 const existing=players.filter(p=>p.id!==null&&p.id!==undefined);
 const newPlayers=players.filter(p=>p.id===null||p.id===undefined);
 
 if(existing.length){
-const r=await DB.from("players").update(
+const r=await DB.from("players").upsert(
 existing.map(p=>({
+id:p.id,
 name:p.name,
 pvp_type:p.pvp_type,
 tier:p.tier
-}))
-).in("id",existing.map(p=>p.id));
+})),
+{onConflict:"id"}
+);
 
-if(r.error){
-alert("Save error: "+r.error.message);
-button.textContent="SAVE FAILED";
-button.disabled=false;
-return;
-}
+if(r.error)throw new Error(r.error.message);
 }
 
 if(newPlayers.length){
@@ -75,30 +77,46 @@ tier:p.tier
 }))
 );
 
-if(r.error){
-alert("Save error: "+r.error.message);
-button.textContent="SAVE FAILED";
-button.disabled=false;
-return;
-}
+if(r.error)throw new Error(r.error.message);
 }
 
 if(deleted.length){
 const r=await DB.from("players").delete().in("id",deleted);
 
-if(r.error){
-alert("Delete error: "+r.error.message);
-button.textContent="DELETE FAILED";
-button.disabled=false;
-return;
-}
+if(r.error)throw new Error(r.error.message);
 }
 
 deleted=[];
+
 await load();
+
 admin();
+
+button=$("saveChanges");
+
+if(button){
 button.textContent="✅ SAVED";
 button.disabled=false;
+}
+
+setTimeout(()=>{
+const b=$("saveChanges");
+if(b){
+b.textContent="💾 SAVE CHANGES";
+b.disabled=false;
+}
+},1200);
+
+}catch(error){
+alert("Save error: "+error.message);
+
+const b=$("saveChanges");
+
+if(b){
+b.textContent="❌ SAVE FAILED";
+b.disabled=false;
+}
+}
 }
 
 $("menuBtn").onclick=()=>{
@@ -146,9 +164,7 @@ admin();
 };
 
 $("loginPass").onkeydown=e=>{
-if(e.key==="Enter"){
-$("loginSubmit").click();
-}
+if(e.key==="Enter")$("loginSubmit").click();
 };
 
 $("search").oninput=render;
