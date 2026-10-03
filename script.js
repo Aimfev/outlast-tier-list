@@ -86,37 +86,25 @@ players.forEach((p,i)=>{
 html+=`
 <div class="adminPlayer">
 <b>${esc(p.name)}</b>
-
-<input
-class="adminInput"
-value="${esc(p.name)}"
-data-name="${i}"
->
+<input class="adminInput" value="${esc(p.name)}" data-name="${i}">
 
 <div class="adminGrid">
 
 <select data-i="${i}" data-k="pvp_type">
 ${types.map(t=>
-`<option value="${esc(t)}" ${p.pvp_type===t?"selected":""}>
-${esc(t)}
-</option>`
+`<option value="${esc(t)}" ${p.pvp_type===t?"selected":""}>${esc(t)}</option>`
 ).join("")}
 </select>
 
 <select data-i="${i}" data-k="tier">
 ${ranks.map(t=>
-`<option value="${esc(t)}" ${p.tier===t?"selected":""}>
-${esc(t)}
-</option>`
+`<option value="${esc(t)}" ${p.tier===t?"selected":""}>${esc(t)}</option>`
 ).join("")}
 </select>
 
 </div>
 
-<button class="danger" data-del="${i}">
-🗑 REMOVE
-</button>
-
+<button class="danger" data-del="${i}">🗑 REMOVE</button>
 </div>
 `;
 });
@@ -135,7 +123,7 @@ button.textContent="SAVING...";
 
 try{
 
-/* UPDATE EXISTING DATABASE PLAYERS */
+/* UPDATE EXISTING PLAYERS */
 
 for(const p of players){
 
@@ -143,15 +131,13 @@ if(p.id===null||p.id===undefined){
 continue;
 }
 
-const data={
+const r=await DB
+.from("players")
+.update({
 name:p.name,
 pvp_type:p.pvp_type,
 tier:p.tier
-};
-
-const r=await DB
-.from("players")
-.update(data)
+})
 .eq("id",p.id);
 
 if(r.error){
@@ -160,8 +146,8 @@ throw new Error(r.error.message);
 
 }
 
-/* CREATE NEW PLAYERS */
-/* IMPORTANT: id IS NOT INCLUDED */
+/* INSERT NEW PLAYERS */
+/* NEVER SEND id */
 
 const newPlayers=players.filter(p=>
 p.id===null||p.id===undefined
@@ -169,23 +155,19 @@ p.id===null||p.id===undefined
 
 for(const p of newPlayers){
 
-const data={
+const r=await DB
+.from("players")
+.insert({
 name:p.name,
 pvp_type:p.pvp_type,
 tier:p.tier
-};
-
-const r=await DB
-.from("players")
-.insert(data)
+})
 .select()
 .single();
 
 if(r.error){
 throw new Error(r.error.message);
 }
-
-/* Give the newly created player its REAL Supabase ID */
 
 p.id=r.data.id;
 
@@ -212,11 +194,11 @@ await load();
 
 admin();
 
-const savedButton=$("saveChanges");
+const saved=$("saveChanges");
 
-if(savedButton){
-savedButton.textContent="✅ SAVED";
-savedButton.disabled=false;
+if(saved){
+saved.textContent="✅ SAVED";
+saved.disabled=false;
 }
 
 }catch(error){
@@ -225,11 +207,11 @@ console.error(error);
 
 alert("Save error: "+error.message);
 
-const failedButton=$("saveChanges");
+const failed=$("saveChanges");
 
-if(failedButton){
-failedButton.textContent="❌ SAVE FAILED";
-failedButton.disabled=false;
+if(failed){
+failed.textContent="❌ SAVE FAILED";
+failed.disabled=false;
 }
 
 }
@@ -275,7 +257,6 @@ return;
 }
 
 $("loginError").textContent="";
-
 $("loginModal").classList.remove("show");
 $("adminModal").classList.add("show");
 
@@ -317,11 +298,7 @@ return;
 
 }
 
-/*
-IMPORTANT:
-A new player has NO id property.
-Supabase will generate the id.
-*/
+/* NEW PLAYER HAS NO ID */
 
 players.push({
 name:name,
